@@ -169,6 +169,77 @@
   
     // Variables globales
     let productoIdActual;
+    let draggedItem = null;
+
+    // ================ DRAG AND DROP ================
+    document.addEventListener('DOMContentLoaded', () => {
+      const table = document.getElementById('tabla-productos');
+      const tbody = document.getElementById('cuerpo-tabla');
+
+      // Evento cuando comienza a arrastrar
+      tbody.addEventListener('dragstart', (e) => {
+        draggedItem = e.target.closest('tr');
+        e.target.style.opacity = '0.5';
+        draggedItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      // Evento cuando se está arrastrando sobre otro elemento
+      tbody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const targetRow = e.target.closest('tr');
+        if (targetRow && targetRow !== draggedItem) {
+          const rect = targetRow.getBoundingClientRect();
+          const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+          targetRow.parentNode.insertBefore(
+            draggedItem, 
+            next ? targetRow.nextSibling : targetRow
+          );
+        }
+      });
+
+      // Evento cuando se suelta el elemento
+      tbody.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedItem) {
+          draggedItem.style.opacity = '1';
+          draggedItem.classList.remove('dragging');
+          actualizarOrden();
+        }
+      });
+
+      // Evento cuando termina el arrastre
+      tbody.addEventListener('dragend', () => {
+        if (draggedItem) {
+          draggedItem.style.opacity = '1';
+          draggedItem.classList.remove('dragging');
+        }
+      });
+    });
+
+    // Función para actualizar el orden en el servidor
+    async function actualizarOrden() {
+      const rows = document.querySelectorAll('#cuerpo-tabla tr');
+      const orderedIds = Array.from(rows).map(row => row.getAttribute('data-id'));
+      
+      try {
+        const response = await fetch('/productos/ordenar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: orderedIds })
+        });
+        
+        if (!response.ok) throw new Error('Error al guardar orden');
+        console.log('¡Orden guardado correctamente!');
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+
+
+
+
 
   // ================ BÚSQUEDA EN TIEMPO REAL ================
   
@@ -186,6 +257,12 @@
         ) ? '' : 'none';
       });
     });
+
+
+
+
+
+
 
  // ================ FUNCIONES DE STOCK ================
  
