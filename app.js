@@ -198,6 +198,31 @@ app.post('/productos/:id/actualizar', upload.single('imagen'), (req, res) => {
 });
 
 
+
+// ============ RUTA PARA GUARDAR EL ORDEN ============
+app.post('/productos/ordenar', requireLogin, (req, res) => {
+  const { ids } = req.body;
+  
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ error: 'IDs inválidos' });
+  }
+
+  db.serialize(() => {
+    const stmt = db.prepare('UPDATE productos SET orden = ? WHERE id = ?');
+    ids.forEach((id, index) => {
+      stmt.run(index + 1, id); // Orden comienza en 1
+    });
+    stmt.finalize(err => {
+      if (err) {
+        console.error('Error al guardar orden:', err);
+        return res.status(500).json({ error: 'Error en la base de datos' });
+      }
+      res.json({ success: true });
+    });
+  });
+});
+
+
 // ---------- Eliminar Producto ----------
 app.delete('/productos/:id', requireLogin, (req, res) => {
   db.serialize(() => {
@@ -223,7 +248,8 @@ app.get('/stock', requireLogin, (req, res) => {
     query += ' WHERE categorias.id = ?';
     params.push(categoriaId);
   }
-
+query += ' ORDER BY COALESCE(productos.orden, 99999), productos.nombre';
+	
   db.all(query, params, (err, productos) => {
     db.all('SELECT * FROM categorias', (err, categorias) => {
       res.render('stock', { 
@@ -364,6 +390,50 @@ app.get('/exportar-excel', requireLogin, (req, res) => {
     params.push(categoria_id);
   }
 
+query += ' ORDER BY COALESCE(productos.orden, 99999), productos.nombre';
+	
+  db.all(query, params, async (err, productos) => {
+    if (err) {
+      console.error('Error al exportar:', err);
+      return res.status(500).send('Error al generar Excel');
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Stock');
+
+    // Configurar columnas
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Categoría', key: 'categoria_nombre', width: 20 },
+      { header: 'Stock', key: 'stock', width: 10 },
+      { header: 'Stock Mínimo', key: 'stock_minimo', width: 12 }
+    ];
+
+    // Añadir datos
+    productos.forEach(p => {
+      worksheet.addRow({
+        id: p.id,
+        nombre: p.nombre,
+        descripcion: p.descripcion,
+    app.get('/exportar-excel', requireLogin, (req, res) => {
+  const { categoria_id } = req.query;
+
+  let query = `
+    SELECT productos.*, categorias.nombre as categoria_nombre 
+    FROM productos 
+    LEFT JOIN categorias ON productos.categoria_id = categorias.id
+  `;
+  
+  let params = [];
+
+  // Filtrar por categoría si se especifica y no es "todas"
+  if (categoria_id && categoria_id !== 'todas') {
+    query += ' WHERE productos.categoria_id = ?';
+    params.push(categoria_id);
+  }
+
   db.all(query, params, async (err, productos) => {
     if (err) {
       console.error('Error al exportar:', err);
@@ -390,6 +460,10 @@ app.get('/exportar-excel', requireLogin, (req, res) => {
         nombre: p.nombre,
         descripcion: p.descripcion,
         categoria_nombre: p.categoria_nombre,
+        stock: p.stock,
+        stock_minimo: p.stock_minimo
+      });
+          categoria_nombre: p.categoria_nombre,
         stock: p.stock,
         stock_minimo: p.stock_minimo
       });
