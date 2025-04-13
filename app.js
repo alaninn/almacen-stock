@@ -22,6 +22,20 @@ app.use(session({
 }));
 app.use(methodOverride('_method'));
 
+
+
+// ================= INICIALIZAR COLUMNA ORDEN (EJECUTAR SOLO UNA VEZ) =================
+db.run(`
+  UPDATE productos 
+  SET orden = id 
+  WHERE orden IS NULL
+`, (err) => {
+  if (err) {
+    console.log('La columna "orden" ya existe o hubo un error:', err.message);
+  } else {
+    console.log('✅ Columna "orden" inicializada correctamente (puedes eliminar este código ahora)');
+  }
+});
 // ================= MIDDLEWARE DE AUTENTICACIÓN =================
 const requireLogin = (req, res, next) => {
   if (!req.session.user) res.redirect('/login');
