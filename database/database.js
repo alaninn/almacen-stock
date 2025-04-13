@@ -31,6 +31,7 @@ db.serialize(() => {
 	  stock_minimo INTEGER DEFAULT 0,
       categoria_id INTEGER,
       imagen TEXT,
+      orden INTEGER,
       FOREIGN KEY(categoria_id) REFERENCES categorias(id)
     )
   `);
