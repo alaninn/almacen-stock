@@ -29,6 +29,12 @@ const requireLogin = (req, res, next) => {
 };
 
 // ================= RUTAS =================
+// Redirigir la raíz al login
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+
 
 // ---------- Login ----------
 app.get('/login', (req, res) => {
