@@ -60,10 +60,17 @@
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody>
-       <% productos.forEach(producto => { %>
-  <tr data-categoria-id="<%= producto.categoria_id %>">
-    <!-- Versión Desktop  -->
+        <tbody id="cuerpo-tabla">
+
+        <% productos.forEach(producto => { %>
+          <tr 
+            data-id="<%= producto.id %>"
+            data-categoria-id="<%= producto.categoria_id %>"
+            draggable="true">
+
+  
+
+<!-- Versión Desktop  -->
     <td class="d-none d-md-table-cell">
       <% if (producto.imagen) { %>
         <img src="<%= producto.imagen %>" width="50">
