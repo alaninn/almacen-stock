@@ -345,31 +345,80 @@ app.delete('/categorias/:id', requireLogin, (req, res) => {
 });
 
 // ---------- Exportar a Excel ----------
+
+// ---------- Exportar a Excel (Versión Mejorada) ----------
 app.get('/exportar-excel', requireLogin, (req, res) => {
-  db.all(`
+  const { categoria_id } = req.query;
+
+  let query = `
     SELECT productos.*, categorias.nombre as categoria_nombre 
     FROM productos 
     LEFT JOIN categorias ON productos.categoria_id = categorias.id
-  `, async (err, productos) => {
+  `;
+  
+  let params = [];
+
+  // Filtrar por categoría si se especifica y no es "todas"
+  if (categoria_id && categoria_id !== 'todas') {
+    query += ' WHERE productos.categoria_id = ?';
+    params.push(categoria_id);
+  }
+
+  db.all(query, params, async (err, productos) => {
+    if (err) {
+      console.error('Error al exportar:', err);
+      return res.status(500).send('Error al generar Excel');
+    }
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Stock');
 
+    // Configurar columnas
     worksheet.columns = [
-      { header: 'Nombre', key: 'nombre' },
-      { header: 'Descripción', key: 'descripcion' },
-      { header: 'Categoría', key: 'categoria_nombre' },
-      { header: 'Stock', key: 'stock' }
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Categoría', key: 'categoria_nombre', width: 20 },
+      { header: 'Stock', key: 'stock', width: 10 },
+      { header: 'Stock Mínimo', key: 'stock_minimo', width: 12 }
     ];
 
-    productos.forEach(p => worksheet.addRow(p));
-    
+    // Añadir datos
+    productos.forEach(p => {
+      worksheet.addRow({
+        id: p.id,
+        nombre: p.nombre,
+        descripcion: p.descripcion,
+        categoria_nombre: p.categoria_nombre,
+        stock: p.stock,
+        stock_minimo: p.stock_minimo
+      });
+      
+      // Resaltar stock bajo
+      if (p.stock <= p.stock_minimo) {
+        const row = worksheet.lastRow;
+        row.eachCell(cell => {
+          cell.font = { color: { argb: 'FFFF0000' }, bold: true }; // Rojo
+        });
+      }
+    });
+
+    // Configurar headers
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=stock.xlsx');
+    
+    // Nombre del archivo incluye categoría
+    let filename = 'stock_todos.xlsx';
+    if (categoria_id && categoria_id !== 'todas') {
+      const categoria = productos[0]?.categoria_nombre || 'categoria';
+      filename = `stock_${categoria.toLowerCase().replace(/\s+/g, '_')}.xlsx`;
+    }
+    
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    
     await workbook.xlsx.write(res);
     res.end();
   });
 });
-
 // ================= INICIAR SERVIDOR =================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
