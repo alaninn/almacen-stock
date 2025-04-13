@@ -24,7 +24,7 @@ app.use(methodOverride('_method'));
 
 
 
-// ================= INICIALIZAR COLUMNA ORDEN (EJECUTAR SOLO UNA VEZ) =================
+// ================= prueba de  pull =================
 
 // ================= MIDDLEWARE DE AUTENTICACIÓN =================
 const requireLogin = (req, res, next) => {
