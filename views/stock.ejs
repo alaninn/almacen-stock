@@ -276,6 +276,14 @@
 	
   </script>
 
+<script>
+  // Exportar Excel con filtro de categoría
+  document.getElementById('btn-exportar-excel').addEventListener('click', () => {
+    const categoriaId = document.querySelector('select[name="categoria"]').value;
+    window.location.href = `/exportar-excel?categoria_id=${categoriaId || 'todas'}`;
+  });
+</script>
+
   <%- include('partials/footer') %>
 </body>
 </html>
