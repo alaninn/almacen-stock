@@ -101,10 +101,10 @@
         <h5 class="modal-title" id="editarCategoriaModalLabel">Editar Categoría</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-<form id="formEditarCategoria" method="POST">
-  <input type="hidden" name="_method" value="PUT"> <!-- Este campo permite que el método sea interpretado como PUT -->
+      
+<form id="formEditarCategoria" action="/categorias/editar" method="POST">
   <div class="modal-body">
-    <input type="hidden" id="categoriaId" name="id">
+    <input type="hidden" id="categoriaId" name="id"> <!-- Campo oculto para el ID -->
     <div class="mb-3">
       <label for="nuevoNombreCategoria" class="form-label">Nuevo Nombre</label>
       <input type="text" class="form-control" id="nuevoNombreCategoria" name="nombre" required>
@@ -115,16 +115,13 @@
     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
   </div>
 </form>
-    </div>
-  </div>
-</div>
+
             
 
 <script>
 function abrirModalEditar(id, nombreActual) {
   const modal = new bootstrap.Modal(document.getElementById('editarCategoriaModal'));
-  const form = document.getElementById('formEditarCategoria');
-  form.action = `/categorias/${id}`; // Configura dinámicamente el atributo action
+  document.getElementById('categoriaId').value = id; // Asigna el ID al campo oculto
   document.getElementById('nuevoNombreCategoria').value = nombreActual; // Rellena el campo del nombre con el valor actual
   modal.show(); // Muestra el modal
 }
