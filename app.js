@@ -1,10 +1,13 @@
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const { db } = require('./database/database');
 const bcrypt = require('bcryptjs');
-const methodOverride = require('method-override');
+
+
 const ExcelJS = require('exceljs');
 
 const app = express();
@@ -12,6 +15,7 @@ const upload = multer({ dest: 'public/uploads/' });
 
 // ================= CONFIGURACIÓN INICIAL =================
 app.set('view engine', 'ejs');
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -20,7 +24,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-app.use(methodOverride('_method'));
+
 
 
 
@@ -75,7 +79,7 @@ app.get('/crear-producto', requireLogin, (req, res) => {
  res.render('crear-producto', { 
   categorias: categorias || [], 
   error: null,
-  success: null // Quitar mensaje hardcodeado
+  success: null 
 });
   
   });
@@ -147,7 +151,7 @@ app.get('/productos/:id/editar', requireLogin, (req, res) => {
 app.post('/productos/:id/actualizar', upload.single('imagen'), (req, res) => {
   const { nombre, descripcion, stock, categoria_id, imagen_actual, stock_minimo } = req.body;
   
-  // Validación mejorada
+  // Validación 
  if (isNaN(stock)) {
     return res.render('Modificarproducto', {
       error: 'Stock inválido',
@@ -338,7 +342,7 @@ app.get('/api/stock-bajo/count', requireLogin, (req, res) => {
         console.error('Error en la consulta:', err);
         return res.json({ count: 0 });
       }
-      res.json({ count: row ? row.count : 0 }); // <- Corrección clave
+      res.json({ count: row ? row.count : 0 }); 
     }
   );
 });
@@ -374,9 +378,41 @@ app.delete('/categorias/:id', requireLogin, (req, res) => {
   });
 });
 
-// ---------- Exportar a Excel ----------
+// ---------- Ruta para editar categoría ----------
+// 
+app.put('/categorias/:id', requireLogin, (req, res) => {
+  const { id } = req.params;
+  const { nombre } = req.body;
 
-// ---------- Exportar a Excel (Versión Mejorada) ----------
+  if (!nombre.trim()) {
+    return db.all('SELECT * FROM categorias ORDER BY nombre', (err, categorias) => {
+      res.render('categorias', { 
+        categorias: categorias || [], 
+        error: 'El nombre de la categoría no puede estar vacío.' 
+      });
+    });
+  }
+
+  db.run(
+    'UPDATE categorias SET nombre = ? WHERE id = ?',
+    [nombre.trim(), id],
+    (err) => {
+      if (err) {
+        console.error('Error al actualizar la categoría:', err);
+        return res.redirect('/categorias?error=Error al actualizar la categoría');
+      }
+      res.redirect('/categorias');
+    }
+  );
+});
+
+
+
+
+
+
+
+// ---------- Exportar a Excel (Versión 2 prueba ) ----------
 app.get('/exportar-excel', requireLogin, (req, res) => {
   const { categoria_id } = req.query;
 
@@ -388,7 +424,7 @@ app.get('/exportar-excel', requireLogin, (req, res) => {
   
   let params = [];
 
-  // Filtrar por categoría si se especifica y no es "todas"
+  // Filtrar por categoría si se especifica
   if (categoria_id && categoria_id !== 'todas') {
     query += ' WHERE productos.categoria_id = ?';
     params.push(categoria_id);
@@ -409,7 +445,7 @@ query += ' ORDER BY COALESCE(productos.orden, 99999), productos.nombre';
     worksheet.columns = [
       { header: 'ID', key: 'id', width: 10 },
       { header: 'Nombre', key: 'nombre', width: 30 },
-      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Descripción', key: 'descripcion', width: 5 },
       { header: 'Categoría', key: 'categoria_nombre', width: 20 },
       { header: 'Stock', key: 'stock', width: 10 },
       { header: 'Stock Mínimo', key: 'stock_minimo', width: 12 }
