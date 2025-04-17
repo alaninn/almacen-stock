@@ -66,24 +66,80 @@
         
       <ul class="list-group">
           <% categorias.forEach(categoria => { %>
+            
             <li class="list-group-item list-group-item-mobile d-flex justify-content-between align-items-center">
-              <span class="text-truncate" style="max-width: 70%"><%= categoria.nombre %></span>
-              <form action="/categorias/<%= categoria.id %>?_method=DELETE" method="POST">
-                <button type="submit" class="btn btn-danger btn-sm btn-sm-mobile">
-                  <i class="bi bi-trash d-md-none"></i>
-                  <span class="d-none d-md-inline">Eliminar</span>
-                </button>
-              </form>
-            </li>
+  <span class="text-truncate" style="max-width: 70%"><%= categoria.nombre %></span>
+  <div class="d-flex gap-2">
+    <form action="/categorias/<%= categoria.id %>?_method=DELETE" method="POST">
+      <button type="submit" class="btn btn-danger btn-sm btn-sm-mobile">
+        <i class="bi bi-trash d-md-none"></i>
+        <span class="d-none d-md-inline">Eliminar</span>
+      </button>
+    </form>
+ <button 
+  class="btn btn-warning btn-sm btn-sm-mobile" 
+  onclick="abrirModalEditar(<%= categoria.id %>, '<%= categoria.nombre %>')"
+>
+  <i class="bi bi-pencil d-md-none"></i>
+  <span class="d-none d-md-inline">Editar</span>
+</button>
+  </div>
+</li>
+            
           <% }); %>
         </ul>
       </div>
     </div>
   </div>
+            
+            <!-- Modal Editar Categoría -->
+
+<div class="modal fade" id="editarCategoriaModal" tabindex="-1" aria-labelledby="editarCategoriaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editarCategoriaModalLabel">Editar Categoría</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+<form id="formEditarCategoria" method="POST">
+  <input type="hidden" name="_method" value="PUT"> <!-- Este campo permite que el método sea interpretado como PUT -->
+  <div class="modal-body">
+    <input type="hidden" id="categoriaId" name="id">
+    <div class="mb-3">
+      <label for="nuevoNombreCategoria" class="form-label">Nuevo Nombre</label>
+      <input type="text" class="form-control" id="nuevoNombreCategoria" name="nombre" required>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+  </div>
+</form>
+    </div>
+  </div>
+</div>
+            
+
+<script>
+function abrirModalEditar(id, nombreActual) {
+  const modal = new bootstrap.Modal(document.getElementById('editarCategoriaModal'));
+  const form = document.getElementById('formEditarCategoria');
+  form.action = `/categorias/${id}`; // Configura dinámicamente el atributo action
+  document.getElementById('nuevoNombreCategoria').value = nombreActual; // Rellena el campo del nombre con el valor actual
+  modal.show(); // Muestra el modal
+}
+</script>
+            
+            
+            
 
   <%- include('partials/footer') %>
+    
+    
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    
   
 </body>
 </html>
