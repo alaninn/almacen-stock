@@ -1,5 +1,5 @@
 const methodOverride = require('method-override');
-app.use(methodOverride('_method'));
+
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
@@ -14,6 +14,7 @@ const app = express();
 const upload = multer({ dest: 'public/uploads/' });
 
 // ================= CONFIGURACIÓN INICIAL =================
+app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
 app.use(express.json());
@@ -380,9 +381,8 @@ app.delete('/categorias/:id', requireLogin, (req, res) => {
 
 // ---------- Ruta para editar categoría ----------
 // 
-app.put('/categorias/:id', requireLogin, (req, res) => {
-  const { id } = req.params;
-  const { nombre } = req.body;
+app.post('/categorias/editar', requireLogin, (req, res) => {
+  const { id, nombre } = req.body;
 
   if (!nombre.trim()) {
     return db.all('SELECT * FROM categorias ORDER BY nombre', (err, categorias) => {
@@ -404,6 +404,7 @@ app.put('/categorias/:id', requireLogin, (req, res) => {
       res.redirect('/categorias');
     }
   );
+});
 });
 
 
